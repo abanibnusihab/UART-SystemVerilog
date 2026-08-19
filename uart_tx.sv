@@ -22,5 +22,19 @@ module uart_tx #(
     logic [12:0] baud_count;
     logic [2:0]  bit_index;
     logic [7:0]  data_reg;
+    
+    always_ff @(posedge clk) begin
+
+        if (rst) begin
+            state      <= IDLE;
+            baud_count <= 0;
+            bit_index  <= 0;
+            data_reg   <= 0;
+        end
+        else begin
+
+        end
+
+    end
 
 endmodule
