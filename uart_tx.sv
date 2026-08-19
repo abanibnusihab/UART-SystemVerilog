@@ -1,0 +1,26 @@
+module uart_tx #(
+    parameter integer CLKS_PER_BIT = 5208
+)(
+    input  logic       clk,
+    input  logic       rst,
+    input  logic       tx_start,
+    input  logic [7:0] tx_data,
+
+    output logic       tx,
+    output logic       busy
+);
+
+    typedef enum logic [1:0] {
+        IDLE,
+        START,
+        DATA,
+        STOP
+    } state_t;
+
+    state_t state;
+
+    logic [12:0] baud_count;
+    logic [2:0]  bit_index;
+    logic [7:0]  data_reg;
+
+endmodule
