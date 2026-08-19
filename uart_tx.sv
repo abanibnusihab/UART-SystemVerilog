@@ -77,8 +77,19 @@ case (state)
 
     end
 
-endcase
+    STOP: begin
 
+        if (baud_count < CLKS_PER_BIT - 1) begin
+            baud_count <= baud_count + 1;
+        end
+        else begin
+            baud_count <= 0;
+            state      <= IDLE;
+        end
+
+    end
+
+endcase
     end
 
 end
