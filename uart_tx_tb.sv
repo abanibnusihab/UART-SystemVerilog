@@ -26,7 +26,6 @@ module uart_tx_tb;
 
     always #10 clk = ~clk;
 
-
     // Reset
     initial begin
         rst = 1;
@@ -36,10 +35,8 @@ module uart_tx_tb;
         rst = 0;
     end
 
-
     // Send A
     initial begin
-
         tx_start = 0;
         tx_data  = 0;
 
@@ -51,7 +48,12 @@ module uart_tx_tb;
         #20;
 
         tx_start = 0;
+    end
 
+    // Record waveform
+    initial begin
+        $dumpfile("uart.vcd");
+        $dumpvars(0, uart_tx_tb);
     end
 
 endmodule
