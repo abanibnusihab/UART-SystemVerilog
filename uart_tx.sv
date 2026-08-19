@@ -10,7 +10,9 @@ module uart_tx #(
     output logic       busy
 );
 
+    // --------------------------------
     // FSM states
+    // --------------------------------
     typedef enum logic [1:0] {
         IDLE,
         START,
@@ -20,19 +22,34 @@ module uart_tx #(
 
     state_t state;
 
+    // --------------------------------
     // UART timing counter
+    // --------------------------------
     logic [12:0] baud_count;
 
-    // Selects which data bit is being transmitted
+    // --------------------------------
+    // Data bit counter
+    // 0 = d0
+    // 1 = d1
+    // ...
+    // 7 = d7
+    // --------------------------------
     logic [2:0] bit_index;
 
-    // Stores the byte currently being transmitted
+    // --------------------------------
+    // Stores the byte being transmitted
+    // --------------------------------
     logic [7:0] data_reg;
 
 
-    // Sequential logic
+    // ================================================
+    // SEQUENTIAL LOGIC
+    // ================================================
     always_ff @(posedge clk) begin
 
+        // -----------------------------
+        // RESET
+        // -----------------------------
         if (rst) begin
             state      <= IDLE;
             baud_count <= 0;
@@ -40,13 +57,16 @@ module uart_tx #(
             data_reg   <= 0;
         end
 
+        // -----------------------------
+        // NORMAL OPERATION
+        // -----------------------------
         else begin
 
             case (state)
 
-                // -------------------------
+                // ====================================
                 // IDLE STATE
-                // -------------------------
+                // ====================================
                 IDLE: begin
 
                     if (tx_start) begin
@@ -59,9 +79,9 @@ module uart_tx #(
                 end
 
 
-                // -------------------------
+                // ====================================
                 // START STATE
-                // -------------------------
+                // ====================================
                 START: begin
 
                     if (baud_count < CLKS_PER_BIT - 1) begin
@@ -76,9 +96,9 @@ module uart_tx #(
                 end
 
 
-                // -------------------------
+                // ====================================
                 // DATA STATE
-                // -------------------------
+                // ====================================
                 DATA: begin
 
                     if (baud_count < CLKS_PER_BIT - 1) begin
@@ -101,9 +121,9 @@ module uart_tx #(
                 end
 
 
-                // -------------------------
+                // ====================================
                 // STOP STATE
-                // -------------------------
+                // ====================================
                 STOP: begin
 
                     if (baud_count < CLKS_PER_BIT - 1) begin
@@ -124,28 +144,50 @@ module uart_tx #(
     end
 
 
-    // TX output logic
+    // ================================================
+    // COMBINATIONAL OUTPUT LOGIC
+    // ================================================
     always_comb begin
 
-        // UART idle level
-        tx = 1'b1;
+        // Default values
+        tx   = 1'b1;
+        busy = 1'b0;
 
         case (state)
 
+            // --------------------------------
+            // IDLE
+            // --------------------------------
             IDLE: begin
-                tx = 1'b1;
+                tx   = 1'b1;
+                busy = 1'b0;
             end
 
+
+            // --------------------------------
+            // START BIT
+            // --------------------------------
             START: begin
-                tx = 1'b0;
+                tx   = 1'b0;
+                busy = 1'b1;
             end
 
+
+            // --------------------------------
+            // DATA BITS
+            // --------------------------------
             DATA: begin
-                tx = data_reg[bit_index];
+                tx   = data_reg[bit_index];
+                busy = 1'b1;
             end
 
+
+            // --------------------------------
+            // STOP BIT
+            // --------------------------------
             STOP: begin
-                tx = 1'b1;
+                tx   = 1'b1;
+                busy = 1'b1;
             end
 
         endcase
