@@ -19,4 +19,12 @@ module uart_tx_tb;
         .busy(busy)
     );
 
+    // Start clock at 0
+    initial begin
+        clk = 0;
+    end
+
+    // 50 MHz clock
+    always #10 clk = ~clk;
+
 endmodule
