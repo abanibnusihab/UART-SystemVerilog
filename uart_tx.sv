@@ -58,6 +58,25 @@ case (state)
 
     end
 
+    DATA: begin
+
+        if (baud_count < CLKS_PER_BIT - 1) begin
+            baud_count <= baud_count + 1;
+        end
+        else begin
+            baud_count <= 0;
+
+            if (bit_index < 7) begin
+                bit_index <= bit_index + 1;
+            end
+            else begin
+                bit_index <= 0;
+                state     <= STOP;
+            end
+        end
+
+    end
+
 endcase
 
     end
