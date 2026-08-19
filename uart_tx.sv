@@ -33,20 +33,32 @@ always_ff @(posedge clk) begin
     end
     else begin
 
-        case (state)
+case (state)
 
-            IDLE: begin
+    IDLE: begin
 
-                if (tx_start) begin
-                    data_reg   <= tx_data;
-                    baud_count <= 0;
-                    bit_index  <= 0;
-                    state      <= START;
-                end
+        if (tx_start) begin
+            data_reg   <= tx_data;
+            baud_count <= 0;
+            bit_index  <= 0;
+            state      <= START;
+        end
 
-            end
+    end
 
-        endcase
+    START: begin
+
+        if (baud_count < CLKS_PER_BIT - 1) begin
+            baud_count <= baud_count + 1;
+        end
+        else begin
+            baud_count <= 0;
+            state      <= DATA;
+        end
+
+    end
+
+endcase
 
     end
 
