@@ -27,4 +27,15 @@ module uart_tx_tb;
     // 50 MHz clock
     always #10 clk = ~clk;
 
+    // Reset
+    initial begin
+        rst      = 1;
+        tx_start = 0;
+        tx_data  = 0;
+
+        #100;
+
+        rst = 0;
+    end
+
 endmodule
