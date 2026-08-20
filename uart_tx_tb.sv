@@ -14,7 +14,7 @@ module uart_tx_tb;
 
 
     //====================================================
-    // DUT - UART Transmitter
+    // DUT
     //====================================================
 
     uart_tx #(
@@ -30,9 +30,8 @@ module uart_tx_tb;
 
 
     //====================================================
-    // Clock Generation
-    // 50 MHz clock
-    // Period = 20 ns
+    // Clock
+    // 50 MHz
     //====================================================
 
     initial begin
@@ -56,7 +55,7 @@ module uart_tx_tb;
 
 
     //====================================================
-    // Task: Send one byte
+    // Send one byte
     //====================================================
 
     task send_byte(input logic [7:0] data);
@@ -66,23 +65,23 @@ module uart_tx_tb;
             // Wait until UART is free
             wait(busy == 0);
 
-            // Put data on input
+            // Put data on UART input
             tx_data = data;
 
-            // Start transmission
+            // Request transmission
             tx_start = 1;
 
-            // Keep tx_start high for one clock
+            // Wait one clock cycle
             @(posedge clk);
 
+            // Remove start request
             tx_start = 0;
 
-            // Wait until transmission is complete
+            // Wait until UART starts transmitting
             wait(busy == 1);
-            wait(busy == 0);
 
-            // Small gap between bytes
-            #100;
+            // Wait until UART finishes
+            wait(busy == 0);
 
         end
 
@@ -90,79 +89,131 @@ module uart_tx_tb;
 
 
     //====================================================
-    // Test Sequence
+    // Check one UART frame
+    //====================================================
+
+    task check_byte(input logic [7:0] expected);
+
+        logic [7:0] received;
+        integer i;
+
+        begin
+
+            // Wait for start bit
+            @(negedge tx);
+
+            // Move to middle of start bit
+            #(5208 * 20 / 2);
+
+            // Check start bit
+            if (tx !== 1'b0) begin
+                $display("FAIL: Start bit incorrect");
+            end
+
+            // Move to middle of first data bit
+            #(5208 * 20);
+
+            // Receive 8 data bits
+            for (i = 0; i < 8; i = i + 1) begin
+
+                received[i] = tx;
+
+                #(5208 * 20);
+
+            end
+
+            // Check received data
+            if (received === expected) begin
+                $display("PASS: Expected = 0x%02h, Received = 0x%02h",
+                         expected, received);
+            end
+            else begin
+                $display("FAIL: Expected = 0x%02h, Received = 0x%02h",
+                         expected, received);
+            end
+
+            // Check stop bit
+            if (tx !== 1'b1) begin
+                $display("FAIL: Stop bit incorrect");
+            end
+            else begin
+                $display("PASS: Stop bit correct");
+            end
+
+        end
+
+    endtask
+
+
+    //====================================================
+    // Test sequence
     //====================================================
 
     initial begin
 
-        // Initial values
         tx_start = 0;
         tx_data  = 8'h00;
 
-        // Wait for reset to finish
+        // Wait for reset
         #120;
 
 
-        // -----------------------------------------------
-        // Test 1: ASCII 'A'
-        // -----------------------------------------------
-
-        $display("TEST 1: Sending A (0x41)");
-
-        send_byte(8'h41);
-
-
-        // -----------------------------------------------
-        // Test 2: ASCII 'B'
-        // -----------------------------------------------
-
-        $display("TEST 2: Sending B (0x42)");
-
-        send_byte(8'h42);
-
-
-        // -----------------------------------------------
-        // Test 3: All zeros
-        // -----------------------------------------------
-
-        $display("TEST 3: Sending 0x00");
-
-        send_byte(8'h00);
-
-
-        // -----------------------------------------------
-        // Test 4: All ones
-        // -----------------------------------------------
-
-        $display("TEST 4: Sending 0xFF");
-
-        send_byte(8'hFF);
-
-
-        // -----------------------------------------------
-        // Test 5: Alternating bits 10101010
-        // -----------------------------------------------
-
-        $display("TEST 5: Sending 0xAA");
-
-        send_byte(8'hAA);
-
-
-        // -----------------------------------------------
-        // Test 6: Alternating bits 01010101
-        // -----------------------------------------------
-
-        $display("TEST 6: Sending 0x55");
-
-        send_byte(8'h55);
-
-
-        // -----------------------------------------------
-        // Test complete
-        // -----------------------------------------------
-
         $display("--------------------------------");
-        $display("ALL UART TESTS COMPLETED");
+        $display("UART TASK 5 VERIFICATION START");
+        $display("--------------------------------");
+
+
+        // Test 1
+        $display("TEST 1: 0x41");
+        fork
+            send_byte(8'h41);
+            check_byte(8'h41);
+        join
+
+
+        // Test 2
+        $display("TEST 2: 0x42");
+        fork
+            send_byte(8'h42);
+            check_byte(8'h42);
+        join
+
+
+        // Test 3
+        $display("TEST 3: 0x00");
+        fork
+            send_byte(8'h00);
+            check_byte(8'h00);
+        join
+
+
+        // Test 4
+        $display("TEST 4: 0xFF");
+        fork
+            send_byte(8'hFF);
+            check_byte(8'hFF);
+        join
+
+
+        // Test 5
+        $display("TEST 5: 0xAA");
+        fork
+            send_byte(8'hAA);
+            check_byte(8'hAA);
+        join
+
+
+        // Test 6
+        $display("TEST 6: 0x55");
+        fork
+            send_byte(8'h55);
+            check_byte(8'h55);
+        join
+
+
+        // Finished
+        $display("--------------------------------");
+        $display("UART TASK 5 VERIFICATION DONE");
         $display("--------------------------------");
 
         #1000;
@@ -173,7 +224,7 @@ module uart_tx_tb;
 
 
     //====================================================
-    // Waveform Dump
+    // Waveform
     //====================================================
 
     initial begin
